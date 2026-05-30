@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎁 好物推荐 · 管理员后台</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6C5CE7; --primary-light: #A29BFE; --secondary: #00B894;
+            --accent: #FDCB6E; --pink: #FD79A8; --orange: #E17055; --blue: #74B9FF;
+            --bg: #F8F9FE; --bg-card: #FFFFFF; --text-primary: #2D3436;
+            --text-secondary: #636E72; --text-muted: #B2BEC3; --border: #DFE6E9;
+            --border-light: #F0F0F5; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 24px;
+            --shadow-sm: 0 2px 8px rgba(108, 92, 231, 0.08);
+            --shadow-md: 0 4px 16px rgba(108, 92, 231, 0.12);
+            --shadow-lg: 0 8px 32px rgba(108, 92, 231, 0.16);
+        }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Sans SC', -apple-system, sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; }
+        body::before {
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 20% 20%, rgba(108, 92, 231, 0.05) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(253, 121, 168, 0.05) 0%, transparent 50%);
+            pointer-events: none; z-index: 0;
+        }
+        .container { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+        .nav { background: var(--bg-card); border-bottom: 1px solid var(--border-light); padding: 0 24px; position: sticky; top: 0; z-index: 100; }
+        .nav-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; height: 64px; }
+        .nav-brand { display: flex; align-items: center; gap: 12px; }
+        .nav-logo { width: 40px; height: 40px; background: linear-gradient(135deg, var(--pink), var(--orange)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .nav-title { font-size: 20px; font-weight: 700; }
+        .nav-badge { padding: 4px 12px; background: linear-gradient(135deg, rgba(253, 121, 168, 0.1), rgba(225, 112, 85, 0.1)); color: var(--pink); font-size: 12px; font-weight: 600; border-radius: 20px; }
+        .sync-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+        .sync-badge.online { background: rgba(0, 184, 148, 0.1); color: var(--secondary); }
+        .sync-badge.offline { background: rgba(255, 118, 117, 0.1); color: #D63031; }
+        .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+        .nav-link { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: linear-gradient(135deg, var(--primary), #5A4BD1); color: white; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 500; transition: all 0.2s; }
+        .nav-link:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3); }
+        .page-header { text-align: center; margin-bottom: 48px; }
+        .page-icon { width: 80px; height: 80px; margin: 0 auto 24px; background: linear-gradient(135deg, var(--pink), var(--orange)); border-radius: 24px; display: flex; align-items: center; justify-content: center; font-size: 40px; box-shadow: var(--shadow-lg); animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .page-title { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+        .page-subtitle { font-size: 16px; color: var(--text-secondary); }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+        .stat-card { background: var(--bg-card); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); }
+        .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 16px; }
+        .stat-icon.purple { background: rgba(108, 92, 231, 0.1); }
+        .stat-icon.green { background: rgba(0, 184, 148, 0.1); }
+        .stat-icon.yellow { background: rgba(253, 203, 110, 0.1); }
+        .stat-icon.pink { background: rgba(253, 121, 168, 0.1); }
+        .stat-value { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+        .stat-label { font-size: 14px; color: var(--text-secondary); }
+        .user-selector { background: var(--bg-card); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); margin-bottom: 32px; }
+        .selector-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+        .user-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+        .user-tab { padding: 10px 20px; background: var(--bg); border: 2px solid var(--border); border-radius: 12px; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 500; color: var(--text-secondary); transition: all 0.2s; }
+        .user-tab:hover { border-color: var(--primary-light); color: var(--primary); }
+        .user-tab.active { background: linear-gradient(135deg, var(--primary), #5A4BD1); border-color: var(--primary); color: white; box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3); }
+        .user-tab .count { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; background: rgba(255, 255, 255, 0.2); border-radius: 10px; font-size: 11px; margin-left: 8px; }
+        .user-tab:not(.active) .count { background: var(--border); }
+        .results-section { margin-bottom: 32px; }
+        .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+        .section-title { font-size: 22px; font-weight: 700; }
+        .section-actions { display: flex; gap: 8px; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; font-family: inherit; font-size: 14px; font-weight: 500; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        .view-toggle { display: flex; background: var(--bg); border-radius: 10px; padding: 4px; }
+        .view-btn { padding: 8px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--text-secondary); transition: all 0.2s; }
+        .view-btn.active { background: white; color: var(--primary); box-shadow: var(--shadow-sm); }
+        .export-btn { background: linear-gradient(135deg, var(--secondary), #00A381); color: white; }
+        .export-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 184, 148, 0.3); }
+        .refresh-btn { background: linear-gradient(135deg, var(--blue), #0984E3); color: white; }
+        .refresh-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(116, 185, 255, 0.3); }
+        .gift-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
+        .gift-card { background: var(--bg-card); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); transition: all 0.3s; }
+        .gift-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+        .gift-header { padding: 20px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid var(--border-light); }
+        .gift-price-tag { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: white; flex-shrink: 0; }
+        .gift-price-tag.price-5 { background: linear-gradient(135deg, #00B894, #00A381); }
+        .gift-price-tag.price-10 { background: linear-gradient(135deg, #00CEC9, #00B5B0); }
+        .gift-price-tag.price-20 { background: linear-gradient(135deg, #0984E3, #0770C2); }
+        .gift-price-tag.price-30 { background: linear-gradient(135deg, #6C5CE7, #5A4BD1); }
+        .gift-price-tag.price-50 { background: linear-gradient(135deg, #A29BFE, #8B82FC); }
+        .gift-price-tag.price-100 { background: linear-gradient(135deg, #FD79A8, #E84393); }
+        .gift-price-tag.price-200 { background: linear-gradient(135deg, #FDCB6E, #F39C12); }
+        .gift-price-tag.price-300 { background: linear-gradient(135deg, #E17055, #D63031); }
+        .gift-price-text { font-size: 12px; opacity: 0.9; }
+        .gift-price-value { font-size: 18px; line-height: 1; }
+        .gift-info { flex: 1; }
+        .gift-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+        .gift-subtitle { font-size: 13px; color: var(--text-muted); }
+        .gift-body { padding: 20px; }
+        .gift-answer { font-size: 15px; line-height: 1.8; padding: 16px; background: var(--bg); border-radius: 12px; border-left: 4px solid; min-height: 60px; }
+        .gift-answer.has-answer { border-color: var(--secondary); }
+        .gift-answer.no-answer { border-color: var(--border); color: var(--text-muted); font-style: italic; }
+        .all-answers-table { width: 100%; background: var(--bg-card); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); }
+        .all-answers-table table { width: 100%; border-collapse: collapse; }
+        .all-answers-table th, .all-answers-table td { padding: 16px; text-align: left; border-bottom: 1px solid var(--border-light); }
+        .all-answers-table th { background: var(--bg); font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+        .all-answers-table td { font-size: 14px; }
+        .all-answers-table tr:last-child td { border-bottom: none; }
+        .all-answers-table tr:hover td { background: rgba(108, 92, 231, 0.02); }
+        .answer-cell { max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .answer-cell:hover { white-space: normal; overflow: visible; }
+        .empty-answer { color: var(--text-muted); font-style: italic; }
+        .toast-container { position: fixed; top: 80px; right: 24px; z-index: 1000; display: flex; flex-direction: column; gap: 8px; }
+        .toast { background: white; border-radius: 12px; padding: 16px 20px; box-shadow: var(--shadow-lg); border-left: 4px solid; display: flex; align-items: center; gap: 12px; min-width: 300px; animation: slideIn 0.3s ease-out; }
+        .toast.success { border-color: var(--secondary); }
+        .toast.error { border-color: #D63031; }
+        .toast.info { border-color: var(--blue); }
+        @keyframes slideIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @media (max-width: 768px) {
+            .container { padding: 24px 16px; }
+            .gift-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .all-answers-table { overflow-x: auto; }
+            .all-answers-table table { min-width: 800px; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <div class="nav-brand">
+                <div class="nav-logo">🎁</div>
+                <span class="nav-title">好物推荐</span>
+                <span class="nav-badge">管理员后台</span>
+                <span class="sync-badge online" id="syncBadge">
+                    <span class="sync-dot"></span>
+                    <span id="syncText">已连接</span>
+                </span>
+            </div>
+            <a href="survey.html" class="nav-link">📝 前往推荐页面</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <div class="page-icon">👑</div>
+            <h1 class="page-title">管理员后台</h1>
+            <p class="page-subtitle">实时查看所有人的好物推荐答案</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon purple">👥</div>
+                <div class="stat-value" id="totalUsers">0</div>
+                <div class="stat-label">参与人数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green">📝</div>
+                <div class="stat-value" id="totalAnswers">0</div>
+                <div class="stat-label">总答案数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon yellow">✅</div>
+                <div class="stat-value" id="completionRate">0%</div>
+                <div class="stat-label">完成率</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon pink">🎁</div>
+                <div class="stat-value">8</div>
+                <div class="stat-label">价格档位</div>
+            </div>
+        </div>
+
+        <div class="user-selector">
+            <div class="selector-title">👤 选择用户查看</div>
+            <div class="user-tabs" id="userTabs"></div>
+        </div>
+
+        <div class="results-section">
+            <div class="section-header">
+                <h2 class="section-title" id="resultTitle">全部推荐</h2>
+                <div class="section-actions">
+                    <div class="view-toggle">
+                        <button class="view-btn active" data-view="cards" onclick="switchView('cards')">卡片视图</button>
+                        <button class="view-btn" data-view="table" onclick="switchView('table')">表格视图</button>
+                    </div>
+                    <button class="btn refresh-btn" onclick="refreshData()">🔄 刷新数据</button>
+                    <button class="btn export-btn" onclick="exportData()">📊 导出数据</button>
+                </div>
+            </div>
+
+            <div id="cardView"><div class="gift-grid" id="giftGrid"></div></div>
+
+            <div id="tableView" style="display: none;">
+                <div class="all-answers-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>用户</th>
+                                <th>5元以内</th>
+                                <th>10元以内</th>
+                                <th>20元以内</th>
+                                <th>30元以内</th>
+                                <th>50元以内</th>
+                                <th>100元以内</th>
+                                <th>200元以内</th>
+                                <th>300元以内</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // 使用免费的 JSON 存储服务（与 survey.html 相同）
+        const STORAGE_API = 'https://api.npoint.io';
+        const BIN_ID = 'b94e79378d179b523c6a'; // 专属存储空间
+
+        const PRICE_TIERS = [
+            { key: '5', label: '5元以内', price: 5, color: 'price-5' },
+            { key: '10', label: '10元以内', price: 10, color: 'price-10' },
+            { key: '20', label: '20元以内', price: 20, color: 'price-20' },
+            { key: '30', label: '30元以内', price: 30, color: 'price-30' },
+            { key: '50', label: '50元以内', price: 50, color: 'price-50' },
+            { key: '100', label: '100元以内', price: 100, color: 'price-100' },
+            { key: '200', label: '200元以内', price: 200, color: 'price-200' },
+            { key: '300', label: '300元以内', price: 300, color: 'price-300' }
+        ];
+
+        const USERS = [
+            { id: 'user1', name: '梧意歆', emoji: '🌟' },
+            { id: 'user2', name: '小乖卷', emoji: '🌟' },
+            { id: 'user3', name: 'April', emoji: '🌟' },
+            { id: 'user4', name: '哈哈额', emoji: '🌟' },
+            { id: 'user5', name: '33', emoji: '🌟' }
+        ];
+
+        let currentView = 'cards';
+        let selectedUser = 'all';
+        let cloudData = {};
+
+        // 从云端加载数据
+        async function loadFromCloud() {
+            try {
+                const response = await fetch(`${STORAGE_API}/${BIN_ID}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    cloudData = data || {};
+                    updateSyncStatus(true);
+                    return data;
+                }
+            } catch (e) {
+                console.log('云端加载失败');
+            }
+            updateSyncStatus(false);
+            return {};
+        }
+
+        function updateSyncStatus(online) {
+            const badge = document.getElementById('syncBadge');
+            const text = document.getElementById('syncText');
+            if (online) {
+                badge.className = 'sync-badge online';
+                text.textContent = '已连接';
+            } else {
+                badge.className = 'sync-badge offline';
+                text.textContent = '离线';
+            }
+        }
+
+        async function refreshData() {
+            await loadFromCloud();
+            renderUserTabs();
+            renderResults();
+            updateStats();
+            showToast('success', '刷新成功', '数据已更新');
+        }
+
+        function renderUserTabs() {
+            const container = document.getElementById('userTabs');
+            let html = `<button class="user-tab ${selectedUser === 'all' ? 'active' : ''}" onclick="selectUser('all')">👥 全部 <span class="count">${getTotalAnswers()}</span></button>`;
+
+            USERS.forEach(user => {
+                const userData = cloudData[user.id];
+                const count = userData?.answers ? Object.values(userData.answers).filter(a => a && a.trim()).length : 0;
+                const nickname = userData?.nickname || user.name;
+                html += `<button class="user-tab ${selectedUser === user.id ? 'active' : ''}" onclick="selectUser('${user.id}')">${user.emoji} ${nickname} <span class="count">${count}</span></button>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function getTotalAnswers() {
+            let total = 0;
+            Object.values(cloudData).forEach(userData => {
+                if (userData?.answers) {
+                    total += Object.values(userData.answers).filter(a => a && a.trim()).length;
+                }
+            });
+            return total;
+        }
+
+        function selectUser(userId) {
+            selectedUser = userId;
+            renderUserTabs();
+            renderResults();
+            updateTitle();
+        }
+
+        function updateTitle() {
+            const titleEl = document.getElementById('resultTitle');
+            if (selectedUser === 'all') {
+                titleEl.textContent = '全部推荐';
+            } else {
+                const userData = cloudData[selectedUser];
+                titleEl.textContent = `${userData?.nickname || selectedUser} 的推荐`;
+            }
+        }
+
+        function switchView(view) {
+            currentView = view;
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.view === view);
+            });
+            document.getElementById('cardView').style.display = view === 'cards' ? 'block' : 'none';
+            document.getElementById('tableView').style.display = view === 'table' ? 'block' : 'none';
+        }
+
+        function renderResults() {
+            renderCardView();
+            renderTableView();
+            updateTitle();
+        }
+
+        function renderCardView() {
+            const container = document.getElementById('giftGrid');
+
+            if (selectedUser === 'all') {
+                let html = '';
+                PRICE_TIERS.forEach(tier => {
+                    const answers = [];
+                    USERS.forEach(user => {
+                        const userData = cloudData[user.id];
+                        const answer = userData?.answers?.[tier.key];
+                        if (answer && answer.trim()) {
+                            answers.push({ user: userData.nickname || user.name, answer });
+                        }
+                    });
+
+                    html += `
+                        <div class="gift-card">
+                            <div class="gift-header">
+                                <div class="gift-price-tag ${tier.color}">
+                                    <div><div class="gift-price-text">≤</div><div class="gift-price-value">${tier.price}元</div></div>
+                                </div>
+                                <div class="gift-info">
+                                    <div class="gift-title">${tier.label}</div>
+                                    <div class="gift-subtitle">${answers.length} 人已回答</div>
+                                </div>
+                            </div>
+                            <div class="gift-body">
+                                ${answers.length > 0 ? `
+                                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                                        ${answers.map(a => `
+                                            <div style="padding: 12px; background: var(--bg); border-radius: 8px;">
+                                                <div style="font-size: 12px; color: var(--primary); font-weight: 600; margin-bottom: 4px;">${a.user}</div>
+                                                <div style="font-size: 14px;">${a.answer}</div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : '<div class="gift-answer no-answer">暂无答案</div>'}
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            } else {
+                const userData = cloudData[selectedUser];
+                const nickname = userData?.nickname || selectedUser;
+                let html = '';
+                PRICE_TIERS.forEach(tier => {
+                    const answer = userData?.answers?.[tier.key] || '';
+                    html += `
+                        <div class="gift-card">
+                            <div class="gift-header">
+                                <div class="gift-price-tag ${tier.color}">
+                                    <div><div class="gift-price-text">≤</div><div class="gift-price-value">${tier.price}元</div></div>
+                                </div>
+                                <div class="gift-info">
+                                    <div class="gift-title">${tier.label}</div>
+                                    <div class="gift-subtitle">${nickname} 的推荐</div>
+                                </div>
+                            </div>
+                            <div class="gift-body">
+                                <div class="gift-answer ${answer ? 'has-answer' : 'no-answer'}">${answer || '尚未填写'}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            }
+        }
+
+        function renderTableView() {
+            const tbody = document.getElementById('tableBody');
+            const usersToShow = selectedUser === 'all' ? USERS : USERS.filter(u => u.id === selectedUser);
+
+            let html = '';
+            usersToShow.forEach(user => {
+                const userData = cloudData[user.id];
+                const nickname = userData?.nickname || user.name;
+                html += '<tr>';
+                html += `<td style="font-weight: 600;">${user.emoji} ${nickname}</td>`;
+                PRICE_TIERS.forEach(tier => {
+                    const answer = userData?.answers?.[tier.key] || '';
+                    html += `<td><div class="answer-cell ${!answer ? 'empty-answer' : ''}">${answer || '未填写'}</div></td>`;
+                });
+                html += '</tr>';
+            });
+            tbody.innerHTML = html;
+        }
+
+        function updateStats() {
+            const activeUsers = Object.values(cloudData).filter(u => u?.answers && Object.values(u.answers).some(a => a && a.trim())).length;
+            document.getElementById('totalUsers').textContent = activeUsers;
+
+            const totalAnswers = getTotalAnswers();
+            document.getElementById('totalAnswers').textContent = totalAnswers;
+
+            const totalPossible = USERS.length * PRICE_TIERS.length;
+            const rate = totalPossible > 0 ? Math.round((totalAnswers / totalPossible) * 100) : 0;
+            document.getElementById('completionRate').textContent = rate + '%';
+        }
+
+        function exportData() {
+            let csv = '用户,' + PRICE_TIERS.map(t => t.label).join(',') + '\n';
+            USERS.forEach(user => {
+                const userData = cloudData[user.id];
+                const nickname = userData?.nickname || user.name;
+                const row = [nickname];
+                PRICE_TIERS.forEach(tier => {
+                    const answer = userData?.answers?.[tier.key] || '';
+                    row.push(`"${answer.replace(/"/g, '""')}"`);
+                });
+                csv += row.join(',') + '\n';
+            });
+
+            const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `好物推荐结果_${new Date().toLocaleDateString('zh-CN')}.csv`;
+            link.click();
+            showToast('success', '导出成功', 'CSV 文件已下载');
+        }
+
+        function showToast(type, title, message) {
+            const container = document.getElementById('toastContainer');
+            const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <span>${icons[type]}</span>
+                <div><div style="font-weight: 600; font-size: 14px;">${title}</div><div style="font-size: 13px; color: var(--text-secondary);">${message}</div></div>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // 初始化
+        async function init() {
+            await loadFromCloud();
+            renderUserTabs();
+            renderResults();
+            updateStats();
+
+            // 每 10 秒自动刷新
+            setInterval(async () => {
+                await loadFromCloud();
+                renderUserTabs();
+                renderResults();
+                updateStats();
+            }, 10000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
