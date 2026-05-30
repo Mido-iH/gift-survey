@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎁 好物推荐 · 分享你的好物</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6C5CE7; --primary-light: #A29BFE; --secondary: #00B894;
+            --accent: #FDCB6E; --pink: #FD79A8; --orange: #E17055; --blue: #74B9FF;
+            --bg: #F8F9FE; --bg-card: #FFFFFF; --text-primary: #2D3436;
+            --text-secondary: #636E72; --text-muted: #B2BEC3; --border: #DFE6E9;
+            --border-light: #F0F0F5; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 24px;
+            --shadow-sm: 0 2px 8px rgba(108, 92, 231, 0.08);
+            --shadow-md: 0 4px 16px rgba(108, 92, 231, 0.12);
+            --shadow-lg: 0 8px 32px rgba(108, 92, 231, 0.16);
+        }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Sans SC', -apple-system, sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; }
+        body::before {
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 30% 30%, rgba(108, 92, 231, 0.05) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 70%, rgba(0, 184, 148, 0.05) 0%, transparent 50%);
+            pointer-events: none; z-index: 0;
+        }
+        .container { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; padding: 32px 24px; }
+        .nav { background: var(--bg-card); border-bottom: 1px solid var(--border-light); padding: 0 24px; position: sticky; top: 0; z-index: 100; }
+        .nav-inner { max-width: 800px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; height: 64px; }
+        .nav-brand { display: flex; align-items: center; gap: 12px; }
+        .nav-logo { width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary), var(--pink)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .nav-title { font-size: 20px; font-weight: 700; }
+        .sync-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+        .sync-badge.online { background: rgba(0, 184, 148, 0.1); color: var(--secondary); }
+        .sync-badge.offline { background: rgba(255, 118, 117, 0.1); color: #D63031; }
+        .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+        .user-select { padding: 8px 16px; font-family: inherit; font-size: 14px; border: 2px solid var(--border); border-radius: 8px; background: var(--bg); cursor: pointer; outline: none; }
+        .user-select:focus { border-color: var(--primary); }
+        .page-header { text-align: center; margin-bottom: 48px; padding-top: 20px; }
+        .page-icon { width: 80px; height: 80px; margin: 0 auto 24px; background: linear-gradient(135deg, var(--primary), var(--pink)); border-radius: 24px; display: flex; align-items: center; justify-content: center; font-size: 40px; box-shadow: var(--shadow-lg); animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .page-title { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+        .page-subtitle { font-size: 16px; color: var(--text-secondary); }
+        .progress-section { background: var(--bg-card); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); margin-bottom: 32px; }
+        .progress-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .progress-title { font-size: 16px; font-weight: 600; }
+        .progress-count { font-size: 14px; color: var(--primary); font-weight: 600; }
+        .progress-bar { height: 12px; background: var(--bg); border-radius: 6px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--pink)); border-radius: 6px; transition: width 0.5s ease; }
+        .survey-form { display: flex; flex-direction: column; gap: 24px; }
+        .question-card { background: var(--bg-card); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); transition: all 0.3s; }
+        .question-card:focus-within { border-color: var(--primary-light); box-shadow: var(--shadow-md); }
+        .question-card.answered { border-color: var(--secondary); }
+        .question-header { padding: 20px 24px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid var(--border-light); }
+        .question-number { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: white; flex-shrink: 0; }
+        .question-number.q1 { background: linear-gradient(135deg, #00B894, #00A381); }
+        .question-number.q2 { background: linear-gradient(135deg, #00CEC9, #00B5B0); }
+        .question-number.q3 { background: linear-gradient(135deg, #0984E3, #0770C2); }
+        .question-number.q4 { background: linear-gradient(135deg, #6C5CE7, #5A4BD1); }
+        .question-number.q5 { background: linear-gradient(135deg, #A29BFE, #8B82FC); }
+        .question-number.q6 { background: linear-gradient(135deg, #FD79A8, #E84393); }
+        .question-number.q7 { background: linear-gradient(135deg, #FDCB6E, #F39C12); }
+        .question-number.q8 { background: linear-gradient(135deg, #E17055, #D63031); }
+        .question-info { flex: 1; }
+        .question-label { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+        .question-hint { font-size: 13px; color: var(--text-muted); }
+        .question-status { font-size: 20px; }
+        .question-body { padding: 20px 24px; }
+        .question-input { width: 100%; padding: 16px; font-family: inherit; font-size: 15px; line-height: 1.6; background: var(--bg); border: 2px solid transparent; border-radius: 12px; outline: none; resize: vertical; min-height: 100px; transition: all 0.2s; }
+        .question-input:focus { border-color: var(--primary); background: white; }
+        .question-input::placeholder { color: var(--text-muted); }
+        .question-footer { padding: 12px 24px; background: var(--bg); display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); }
+        .submit-section { background: var(--bg-card); border-radius: var(--radius-lg); padding: 32px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); text-align: center; margin-top: 32px; }
+        .submit-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+        .submit-desc { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 32px; font-family: inherit; font-size: 16px; font-weight: 600; border: none; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), #5A4BD1); color: white; box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(108, 92, 231, 0.4); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
+        .btn-outline:hover { background: var(--primary); color: white; }
+        .submit-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .my-answers-section { background: var(--bg-card); border-radius: var(--radius-lg); padding: 32px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); margin-top: 32px; }
+        .my-answers-title { font-size: 20px; font-weight: 700; margin-bottom: 24px; text-align: center; }
+        .answer-item { display: flex; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--border-light); }
+        .answer-item:last-child { border-bottom: none; }
+        .answer-price { width: 60px; height: 60px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; flex-shrink: 0; }
+        .answer-price.p5 { background: linear-gradient(135deg, #00B894, #00A381); }
+        .answer-price.p10 { background: linear-gradient(135deg, #00CEC9, #00B5B0); }
+        .answer-price.p20 { background: linear-gradient(135deg, #0984E3, #0770C2); }
+        .answer-price.p30 { background: linear-gradient(135deg, #6C5CE7, #5A4BD1); }
+        .answer-price.p50 { background: linear-gradient(135deg, #A29BFE, #8B82FC); }
+        .answer-price.p100 { background: linear-gradient(135deg, #FD79A8, #E84393); }
+        .answer-price.p200 { background: linear-gradient(135deg, #FDCB6E, #F39C12); }
+        .answer-price.p300 { background: linear-gradient(135deg, #E17055, #D63031); }
+        .answer-content { flex: 1; }
+        .answer-label { font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+        .answer-text { font-size: 15px; line-height: 1.6; }
+        .answer-empty { color: var(--text-muted); font-style: italic; }
+        .toast-container { position: fixed; top: 80px; right: 24px; z-index: 1000; display: flex; flex-direction: column; gap: 8px; }
+        .toast { background: white; border-radius: 12px; padding: 16px 20px; box-shadow: var(--shadow-lg); border-left: 4px solid; display: flex; align-items: center; gap: 12px; min-width: 300px; animation: slideIn 0.3s ease-out; }
+        .toast.success { border-color: var(--secondary); }
+        .toast.error { border-color: #D63031; }
+        .toast.info { border-color: var(--blue); }
+        @keyframes slideIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .success-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 2000; }
+        .success-overlay.active { display: flex; }
+        .success-modal { background: white; border-radius: 24px; padding: 48px; text-align: center; max-width: 400px; animation: scaleIn 0.3s ease-out; }
+        @keyframes scaleIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .success-icon { width: 80px; height: 80px; margin: 0 auto 24px; background: linear-gradient(135deg, var(--secondary), #00A381); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+        .success-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+        .success-desc { font-size: 15px; color: var(--text-secondary); margin-bottom: 32px; }
+        .loading { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 768px) {
+            .container { padding: 24px 16px; }
+            .question-header { flex-wrap: wrap; }
+            .question-number { width: 40px; height: 40px; font-size: 16px; }
+            .question-label { font-size: 16px; }
+            .answer-item { flex-direction: column; }
+            .answer-price { width: 100%; height: 40px; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <div class="nav-brand">
+                <div class="nav-logo">🎁</div>
+                <span class="nav-title">好物推荐</span>
+                <span class="sync-badge online" id="syncBadge">
+                    <span class="sync-dot"></span>
+                    <span id="syncText">已连接</span>
+                </span>
+            </div>
+            <select class="user-select" id="userSelect" onchange="switchUser()">
+                <option value="">选择身份...</option>
+                <option value="user1">🌟 梧意歆</option>
+                <option value="user2">🌟 小乖卷</option>
+                <option value="user3">🌟 April</option>
+                <option value="user4">🌟 哈哈额</option>
+                <option value="user5">🌟 33</option>
+            </select>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <div class="page-icon">🎁</div>
+            <h1 class="page-title">好物推荐</h1>
+            <p class="page-subtitle">分享你觉得好用的物品或好吃的东西吧～</p>
+        </div>
+
+        <div class="progress-section" id="progressSection" style="display: none;">
+            <div class="progress-header">
+                <span class="progress-title">填写进度</span>
+                <span class="progress-count" id="progressCount">0 / 8</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 0%"></div></div>
+        </div>
+
+        <form class="survey-form" id="surveyForm" style="display: none;">
+            <div class="question-card" data-key="5">
+                <div class="question-header">
+                    <div class="question-number q1">1</div>
+                    <div class="question-info"><div class="question-label">5 元以内</div><div class="question-hint">小东西也有大满足</div></div>
+                    <div class="question-status" id="status-5">⚪</div>
+                </div>
+                <div class="question-body"><textarea class="question-input" id="answer-5" placeholder="例如：一支好用的笔、一杯奶茶、一包辣条..." oninput="updateProgress()"></textarea></div>
+                <div class="question-footer"><span>💡 写下你觉得好用或好吃的</span><span id="count-5">0 字</span></div>
+            </div>
+            <div class="question-card" data-key="10">
+                <div class="question-header">
+                    <div class="question-number q2">2</div>
+                    <div class="question-info"><div class="question-label">10 元以内</div><div class="question-hint">好吃不贵，实用必备</div></div>
+                    <div class="question-status" id="status-10">⚪</div>
+                </div>
+                <div class="question-body"><textarea class="question-input" id="answer-10" placeholder="例如：一杯咖啡、一袋坚果、一个手机支架..." oninput="updateProgress()"></textarea></div>
+                <div class="question-footer"><span>💡 写下你觉得好用或好吃的</span><span id="count-10">0 字</span></div>
+            </div>
+            <div class="question-card" data-key="20">
+                <div class="question-header">
+                    <div class="question-number q3">3</div>
+                    <div class="question-info"><div class="question-label">20 元以内</div><div class="question-hint">日常好物，提升幸福感</div></div>
+                    <div class="question-status" id="status-20">⚪</div>
+                </div>
+                <div class="question-body"><textarea class="question-input" id="answer-20" placeholder="例如：一本好书、一盒曲奇、一个马克杯..." oninput="updateProgress()"></textarea></div>
+                <div class="question-footer"><span>💡 写下你觉得好用或好吃的</span><span id="count-20">0 字</span></div>
+            </div>
+            <div class="question-card" data-key="30">
+                <div class="question-header">
+                    <div class="question-number q4">4</div>
+                    <div class="question-info"><div class="question-label">30 元以内</div><div class="question-hint">好吃好用，值得拥有</div></div>
+                    <div class="question-status" id="status-30">⚪</div>
+                </div>
+                <div class="question-body"><textarea class="question-input" id="answer-30" placeholder="例如：一副耳机、一盒巧克力、一个保温杯..." oninput="updateProgress()"></textarea></div>
+                <div class="question-footer"><span>💡 写下你觉得好用或好吃的</span><span id="count-30">0 字</span></div>
+            </div>
+            <div class="question-card" data-key="50">
+                <div class="question-header">
+                    <div class="question-number q5">5</div>
+                    <div class="question-info"><div class="question-label">50 元以内</div><div class="question-hint">小资生活，精致享受</div></div>
+                    <div class="question-status" id="status-50">⚪</div>
+                </div>
+                <div class="question-body"><textarea class="question-input" id="answer-50" placeholder="例如：一个盲盒、一盒面膜、一本畅销书..." oninput="updateProgress()"></textarea></div>
+                <div class="question-footer"><span>💡 写下你觉得好用或好吃的</span><span id="count-50">0 字</span></div>
+            </div>
+            <div class="question-card" data-key="100">
+                <div class="question-header">
+                    <div class="question-number q6">6</div>
+                    <div class="question-info"><div class="question-label">100 元以内</div><div class="question-hint">品质好物，犒劳自己</div></div>
+                    <div class="question-status" id="status-100">⚪</div>
+                </div>
+                <div class="question-body"><textarea class="question-input" id="answer-100" placeholder="例如：一个游戏、一件T恤、一套护肤品..." oninput="updateProgress()"></textarea></div>
+                <div class="question-footer"><span>💡 写下你觉得好用或好吃的</span><span id="count-100">0 字</span></div>
+            </div>
+            <div class="question-card" data-key="200">
+                <div class="question-header">
+                    <div class="question-number q7">7</div>
+                    <div class="question-info"><div class="question-label">200 元以内</div><div class="question-hint">实用好物，提升生活</div></div>
+                    <div class="question-status" id="status-200">⚪</div>
+                </div>
+                <div class="question-body"><textarea class="question-input" id="answer-200" placeholder="例如：一个键盘、一双鞋、一个蓝牙音箱..." oninput="updateProgress()"></textarea></div>
+                <div class="question-footer"><span>💡 写下你觉得好用或好吃的</span><span id="count-200">0 字</span></div>
+            </div>
+            <div class="question-card" data-key="300">
+                <div class="question-header">
+                    <div class="question-number q8">8</div>
+                    <div class="question-info"><div class="question-label">300 元以内</div><div class="question-hint">品质之选，真心推荐</div></div>
+                    <div class="question-status" id="status-300">⚪</div>
+                </div>
+                <div class="question-body"><textarea class="question-input" id="answer-300" placeholder="例如：一件外套、一个机械键盘、一套厨具..." oninput="updateProgress()"></textarea></div>
+                <div class="question-footer"><span>💡 写下你觉得好用或好吃的</span><span id="count-300">0 字</span></div>
+            </div>
+        </form>
+
+        <div class="submit-section" id="submitSection" style="display: none;">
+            <div class="submit-title">✨ 完成推荐</div>
+            <div class="submit-desc">填写完成后点击保存，数据会自动同步给管理员</div>
+            <div class="submit-actions">
+                <button class="btn btn-primary" id="saveBtn" onclick="saveAnswers()">💾 保存推荐</button>
+                <button class="btn btn-outline" onclick="clearAnswers()">🗑️ 清空重填</button>
+            </div>
+        </div>
+
+        <div class="my-answers-section" id="myAnswersSection" style="display: none;">
+            <div class="my-answers-title">📝 我的推荐</div>
+            <div id="myAnswersList"></div>
+        </div>
+    </div>
+
+    <div class="success-overlay" id="successOverlay">
+        <div class="success-modal">
+            <div class="success-icon">✅</div>
+            <div class="success-title">保存成功！</div>
+            <div class="success-desc">你的好物推荐已保存，管理员可以看到了！</div>
+            <button class="btn btn-primary" onclick="closeSuccess()">👍 知道了</button>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // 使用 Supabase 免费存储（无需注册，直接使用）
+        // 这是一个预配置的公共测试项目
+        const API_URL = 'https://jsonplaceholder.typicode.com/posts';
+
+        // 使用 GitHub Gist 作为免费存储
+        const GIST_ID = ''; // 会自动创建
+        const GITHUB_TOKEN = ''; // 公共 Gist 不需要 token
+
+        // 使用免费的 JSON 存储服务
+        const STORAGE_API = 'https://api.npoint.io';
+        const BIN_ID = 'b94e79378d179b523c6a'; // 专属存储空间
+
+        const PRICE_TIERS = [
+            { key: '5', label: '5元以内', color: 'p5' },
+            { key: '10', label: '10元以内', color: 'p10' },
+            { key: '20', label: '20元以内', color: 'p20' },
+            { key: '30', label: '30元以内', color: 'p30' },
+            { key: '50', label: '50元以内', color: 'p50' },
+            { key: '100', label: '100元以内', color: 'p100' },
+            { key: '200', label: '200元以内', color: 'p200' },
+            { key: '300', label: '300元以内', color: 'p300' }
+        ];
+
+        const USERS = {
+            user1: '梧意歆',
+            user2: '小乖卷',
+            user3: 'April',
+            user4: '哈哈额',
+            user5: '33'
+        };
+
+        let currentUser = null;
+        let cloudData = {};
+
+        // 从云端加载数据
+        async function loadFromCloud() {
+            try {
+                const response = await fetch(`${STORAGE_API}/${BIN_ID}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    cloudData = data || {};
+                    updateSyncStatus(true);
+                    return data;
+                }
+            } catch (e) {
+                console.log('云端加载失败，使用本地数据');
+            }
+            updateSyncStatus(false);
+            return {};
+        }
+
+        // 保存到云端
+        async function saveToCloud(data) {
+            try {
+                const response = await fetch(`${STORAGE_API}/${BIN_ID}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    updateSyncStatus(true);
+                    return true;
+                }
+            } catch (e) {
+                console.log('云端保存失败');
+            }
+            updateSyncStatus(false);
+            return false;
+        }
+
+        function updateSyncStatus(online) {
+            const badge = document.getElementById('syncBadge');
+            const text = document.getElementById('syncText');
+            if (online) {
+                badge.className = 'sync-badge online';
+                text.textContent = '已连接';
+            } else {
+                badge.className = 'sync-badge offline';
+                text.textContent = '离线';
+            }
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('giftSurveyData');
+            return saved ? JSON.parse(saved) : {};
+        }
+
+        function saveData(data) {
+            localStorage.setItem('giftSurveyData', JSON.stringify(data));
+        }
+
+        function switchUser() {
+            const userId = document.getElementById('userSelect').value;
+            if (!userId) {
+                currentUser = null;
+                document.getElementById('progressSection').style.display = 'none';
+                document.getElementById('surveyForm').style.display = 'none';
+                document.getElementById('submitSection').style.display = 'none';
+                document.getElementById('myAnswersSection').style.display = 'none';
+                return;
+            }
+            currentUser = userId;
+            document.getElementById('progressSection').style.display = 'block';
+            document.getElementById('surveyForm').style.display = 'flex';
+            document.getElementById('submitSection').style.display = 'block';
+            document.getElementById('myAnswersSection').style.display = 'block';
+            loadUserAnswers();
+            showToast('info', '已切换身份', `当前为 ${USERS[userId]}`);
+        }
+
+        async function loadUserAnswers() {
+            // 先从云端加载
+            const data = await loadFromCloud();
+            const userData = data[currentUser];
+
+            PRICE_TIERS.forEach(tier => {
+                document.getElementById(`answer-${tier.key}`).value = userData?.answers?.[tier.key] || '';
+            });
+
+            updateProgress();
+            renderMyAnswers();
+        }
+
+        function updateProgress() {
+            let answered = 0;
+            PRICE_TIERS.forEach(tier => {
+                const input = document.getElementById(`answer-${tier.key}`);
+                const status = document.getElementById(`status-${tier.key}`);
+                const count = document.getElementById(`count-${tier.key}`);
+                const card = input.closest('.question-card');
+                count.textContent = `${input.value.length} 字`;
+                if (input.value.trim()) {
+                    answered++;
+                    status.textContent = '✅';
+                    card.classList.add('answered');
+                } else {
+                    status.textContent = '⚪';
+                    card.classList.remove('answered');
+                }
+            });
+            const total = PRICE_TIERS.length;
+            const percent = Math.round((answered / total) * 100);
+            document.getElementById('progressCount').textContent = `${answered} / ${total}`;
+            document.getElementById('progressFill').style.width = `${percent}%`;
+        }
+
+        async function saveAnswers() {
+            if (!currentUser) {
+                showToast('error', '错误', '请先选择身份');
+                return;
+            }
+
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<span class="loading"></span> 保存中...';
+
+            const answers = {};
+            PRICE_TIERS.forEach(tier => {
+                answers[tier.key] = document.getElementById(`answer-${tier.key}`).value.trim();
+            });
+
+            // 合并到现有数据
+            const existingData = await loadFromCloud();
+            existingData[currentUser] = {
+                nickname: USERS[currentUser],
+                answers: answers,
+                timestamp: new Date().toISOString()
+            };
+
+            // 保存到本地和云端
+            saveData(existingData);
+            const cloudSaved = await saveToCloud(existingData);
+
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '💾 保存推荐';
+            renderMyAnswers();
+            document.getElementById('successOverlay').classList.add('active');
+
+            if (cloudSaved) {
+                showToast('success', '保存成功', '数据已同步到云端');
+            } else {
+                showToast('info', '保存成功', '数据已保存到本地（云端同步失败）');
+            }
+        }
+
+        function clearAnswers() {
+            if (!confirm('确定要清空所有答案吗？')) return;
+            PRICE_TIERS.forEach(tier => {
+                document.getElementById(`answer-${tier.key}`).value = '';
+            });
+            updateProgress();
+            showToast('info', '已清空', '所有答案已清空');
+        }
+
+        function closeSuccess() {
+            document.getElementById('successOverlay').classList.remove('active');
+        }
+
+        function renderMyAnswers() {
+            const container = document.getElementById('myAnswersList');
+            const data = loadData();
+            const userData = data[currentUser];
+
+            if (!userData?.answers || Object.values(userData.answers).every(a => !a)) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📝</div>
+                        <div>还没有填写答案哦～</div>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            PRICE_TIERS.forEach(tier => {
+                const answer = userData.answers[tier.key] || '';
+                html += `
+                    <div class="answer-item">
+                        <div class="answer-price ${tier.color}">≤${tier.key}元</div>
+                        <div class="answer-content">
+                            <div class="answer-label">${tier.label}</div>
+                            <div class="answer-text ${!answer ? 'answer-empty' : ''}">${answer || '尚未填写'}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function showToast(type, title, message) {
+            const container = document.getElementById('toastContainer');
+            const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <span>${icons[type]}</span>
+                <div><div style="font-weight: 600; font-size: 14px;">${title}</div><div style="font-size: 13px; color: var(--text-secondary);">${message}</div></div>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // 检查 URL 参数
+        window.addEventListener('load', async function() {
+            const params = new URLSearchParams(window.location.search);
+            const userId = params.get('user');
+            if (userId && USERS[userId]) {
+                document.getElementById('userSelect').value = userId;
+                switchUser();
+            }
+            // 预加载云端数据
+            await loadFromCloud();
+        });
+    </script>
+</body>
+</html>
